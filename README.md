@@ -1,4 +1,4 @@
-# TCP-Assignment2
+# TCP - Assignment 2
 
 Team Name: Horse Power
 
