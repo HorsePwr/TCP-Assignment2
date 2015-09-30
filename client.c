@@ -5,6 +5,64 @@ void error(const char *msg){
     exit(0);
 }
 
+void createFile(int sockfd){	//Creating file on client-site
+  	printf("Creating a file...");
+	
+	//Setting directory
+	char content[256];
+	char dir[256] = "/home/";
+	
+	//get machine current username
+	char *username=getenv("USER");
+	if(username==NULL){
+		//return EXIT_FAILURE;
+		exit(0);
+	}
+
+	strcat(dir, username);
+	char file[256] = "/FRS/Client/";
+	strcat(dir, file);
+	
+	//Create directory if it does not exist	
+	struct stat st = {0};
+	if(stat(dir, &st) == -1){
+	  mkdir(dir, 0700);
+	}
+	
+	//Create file name
+	char filename[256];
+	printf("\nPlease enter file name: ");
+	fgets(filename, 256, stdin);
+	
+	if(filename != NULL){
+		strcat(dir, filename);
+		printf("File location: %s", dir);
+		//Create file
+		FILE *fp;
+		fp = fopen(dir, "w+");
+		if(fp == NULL){
+		  printf("\nERROR: File cannot be created");
+		  perror("fopen");	
+		  exit(0);	
+		}
+		else{	//Client insert content
+		  printf("Please insert the content here: ");
+		  fgets(content, 256, stdin);
+		  printf("Content: %s", content);
+		 
+		  fprintf(fp, "%s", content);	//Write content into the file
+		  fclose(fp);
+		  printf("\nFile created successfully!");
+		}
+	}
+	else{
+		printf("\nERROR: Filename cannot be NULL");		
+		printf("\nERROR: Please try again later");
+		exit(0);
+	}
+}
+
+
 void createDir(int sockfd){
 	printf("~~~  create Directory  ~~~\n\n");
 
@@ -356,7 +414,7 @@ void copyDir(int sockfd){
 		scanf("%s",desName);
 		strcat(des, desName);
 		
-		if(stat(dir, &st) == -1){
+		if(stat(des, &st) == -1){
 			printf("\nDirectory don't exist\n");
 		}
 		else{
@@ -367,6 +425,76 @@ void copyDir(int sockfd){
 
 			system(commandAction);
 			printf("\nSuccessful copy the directory");
+		}
+	}
+}
+
+void deleteFile(int sockfd){	//Deleting file on client-site
+	printf("Deleting a file...");
+	
+	//Setting directory
+	char content[256];
+	char dir[256] = "/home/";
+	
+	//get machine current username
+	char *username=getenv("USER");
+	if(username==NULL){
+		//return EXIT_FAILURE;
+		exit(0);
+	}
+
+	strcat(dir, username);
+	char file[256] = "/FRS/Client/";
+	strcat(dir, file);
+	
+	//Create directory if it does not exist	
+	struct stat st = {0};
+	if(stat(dir, &st) == -1){
+	  mkdir(dir, 0700);
+	}
+
+	//Printing files that is available from the directory
+	printf("\nAvailable file: \n");
+	DIR *directory;
+	struct dirent *ent;
+	if((directory = opendir(dir)) != NULL){
+	  while((ent = readdir(directory)) != NULL){
+		printf("%s", ent->d_name);
+	  }
+	  closedir(directory);
+	}
+	else{
+	  perror("ERROR");
+	  exit(0);
+	}
+
+	//Getting file name to be deleted
+	char filename[256];
+	printf("\nPlease enter the file name that you want to delete: ");
+	fgets(filename, 256, stdin);
+
+	
+	if(filename != NULL){
+
+		strcat(dir, filename);
+		FILE *fp;
+		
+		//Check if file available
+		fp = fopen(dir, "r");
+		if(fp == NULL){
+		  printf("\nERROR: File cannot be created");
+		  perror("fopen");	
+		  exit(0);	
+		}
+		else{	//Deleting file
+		  int status = remove(dir);
+		  if(status == 0){
+			printf("\nFile deleted successfully!");
+			fclose(fp);
+		  }else{
+			printf("\nERROR: unable to delete the file");
+			exit(0);
+		  }
 		}
 	}
 }
@@ -400,14 +528,14 @@ int main(int argc, char *argv[])	//Connecting to Server (SOCKET)
 	if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
 		error("ERROR connecting");
 
-    printf("\n~~ Connected to FRS Server! ~~");
+    printf("\n~~~~~  File Repository System  ~~~~~");
 
     int count = 0;
     while(count == 0){	//Getting Client's choice
 	
 		//printf("\n\n1.Create 2.Download 3.Send 4.Delete 5.Exit : ");
-		printf("\n\nFile:      1.Send     2.Download");
-		printf("\nDirectory: 3.Create   4.Delete     5.Copy     6.Exit : ");
+		printf("\n\nFile:      1.Send     2.Download   3.Create   4.Delete");
+		printf("\nDirectory: 5.Create   6.Delete     7.Copy     8.Exit : ");
 		char buffer[256];
 		printf("\nPlease insert your choice: ");
 		bzero(buffer,256);
@@ -435,20 +563,28 @@ int main(int argc, char *argv[])	//Connecting to Server (SOCKET)
 		   downloadFile(sockfd);
 		   count = 0;
 		}
-		else if((strcmp(input, "3\n")) == 0){	//Client send file to Server
+		else if((strcmp(input, "3\n")) == 0){	//Client create file to Server
+		   createFile(sockfd);
+		   count = 1;
+		}
+		else if((strcmp(input, "4\n")) == 0){	//Client delete file to Server
+		   deleteFile(sockfd);
+		   count = 1;
+		}
+		else if((strcmp(input, "5\n")) == 0){	//Create directory on client-site
 		   //createFile(sockfd);
 		   createDir(sockfd);
 		   count = 1;
 		}
-		else if((strcmp(input, "4\n")) == 0){	//Delete directory on client-site
+		else if((strcmp(input, "6\n")) == 0){	//Delete directory on client-site
 		   deleteDir(sockfd);
 		   count = 1;
 		}
-		else if((strcmp(input, "5\n")) == 0){	//Copy directory on client-site
+		else if((strcmp(input, "7\n")) == 0){	//Copy directory on client-site
 		   copyDir(sockfd);
 		   count = 1;
 		}
-		else if((strcmp(input, "6\n")) == 0){	//Client disconnect from Server
+		else if((strcmp(input, "8\n")) == 0){	//Client disconnect from Server
 		   count++;
 		}
 		else{
