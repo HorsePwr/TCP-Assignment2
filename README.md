@@ -18,11 +18,11 @@ First create a directory name "FRS" on home, after that open 2 terminal.
 
 Terminal 1:
 gcc server.c -o server  |
-./server 30000  |
+./server 30000
 
 Terminal 2:
 gcc client.c -o client  |
-./client 127.0.0.1 30000  |
+./client 127.0.0.1 30000
 
 
 please replace the 127.0.0.1 with server ip address
