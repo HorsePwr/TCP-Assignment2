@@ -25,5 +25,5 @@ gcc client.c -o client  |
 ./client 127.0.0.1 30000
 
 
-please replace the 127.0.0.1 with server ip address
-port number must same between server and client.
+Please replace the 127.0.0.1 with server ip address.
+Port number must same between server and client.
